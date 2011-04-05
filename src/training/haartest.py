@@ -43,19 +43,18 @@ def detect_and_draw(img, cascade):
 
 if __name__ == '__main__':
 
-    cascade = cv.Load('/home/jq/data/malaria/haarcascade.xml')
+    cascade = cv.Load('../../data/haarcascade_plasmodium.xml')
     cv.NamedWindow("result", 1)
 
-    '''
     # Processing a single image
-    testimage = '/home/jq/data/malaria/200/20110324_163112.jpg'
+    testimage = '../../data/200/20110324_163112.jpg'
     image = cv.LoadImage(testimage, 1)
     detect_and_draw(image, cascade)
     cv.WaitKey(0)
-    '''
 
+    '''
     # Processing video
-    capture = cv.CaptureFromFile('/home/jq/data/malaria/scope_recording_mar24.avi')
+    capture = cv.CaptureFromFile('/home/jq/data/video/scope_recording_mar24.avi')
     while True:
         img = cv.QueryFrame(capture)
         if img==None or cv.WaitKey(10) == 27:
@@ -63,3 +62,4 @@ if __name__ == '__main__':
         detect_and_draw(img, cascade)
 
     cv.DestroyWindow("result")
+    '''
