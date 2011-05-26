@@ -5,10 +5,6 @@ mean parasite training descriptor.
 '''
 
 import cv
-import numpy
-import math
-from time import clock
-from kdtree import *
 
 def findmatches(imageDescriptors,mu,inverse_sigma,threshold):
     '''
@@ -103,8 +99,8 @@ if __name__ == '__main__':
                     ycentre = imageKeypoints[match][0][1]
                     cv.Circle( imcolour, (xcentre,ycentre), 30, [0,0,255] )
                     
-            if len(matches)>0:
-                cv.PutText(imcolour, 'parasites detected', (10,20), cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX,0.5,0.5), (255,255,255))
+                if len(matches)>0:
+                    cv.PutText(imcolour, 'parasites detected', (10,20), cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX,0.5,0.5), (255,255,255))
             cv.ShowImage("ParaSight", imcolour)
     
             # quit if escape key is pressed
