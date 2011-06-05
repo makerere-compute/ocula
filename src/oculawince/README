@@ -1,0 +1,21 @@
+Ocula for Windows CE
+
+- Windows Mobile 
+- C#,VC++,WINAPI
+
+Development IDE:
+Visual Studio 2008
+Windows Mobile 6.0 Professional SDK
+
+Because of the contraints of our github we could not upload some third party libraries so be sure to download them;
+
+Opencv_wince by Alex Karpus:http://alexkarpus.com/opencv/
+
+This project has three Modules;
+
+1.CameraCaptureDLL is a customized directshow library used in this project to stream video and capture still images. Entirely written in VC++ and WINAPI with provision of Managed code(C#) interfacing
+
+2.DLL is a Visual C++ application with C# interfacing for Opencv Module. It is this module that has Computer Vision functions used in this project that interface with opencv.Managed code(C#) are also provided.
+
+3.Ocula is a C# application that access the Above modules via there interfaces to provide a fully interactive Mobile Phone Experience for Malaria Diagnosis
+
