@@ -4,12 +4,16 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Paint;
 import android.hardware.Camera;
 import android.hardware.Camera.Size;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -57,6 +61,36 @@ public class VisualDetection extends Activity {
             new AlertDialog.Builder(this).setMessage(e.getMessage()).create().show();
         }
     }
+    
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+
+		// Inflate our menu which can gather user input for switching camera
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.list_visual_options_menu, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle all of the possible menu actions.
+		switch (item.getItemId()) {
+		case R.id.menu_camera_close:
+			setResult(1);
+			finish();
+			break;
+		case R.id.menu_camera_snap_diagnosis:
+						
+			Intent i = new Intent("SnapDetection");			
+			startActivity(i);
+
+			break;
+
+		}
+		return super.onOptionsItemSelected(item);
+
+	}
 }
 
 class FaceView extends View implements Camera.PreviewCallback {

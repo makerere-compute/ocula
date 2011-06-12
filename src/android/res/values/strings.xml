@@ -2,4 +2,5 @@
 <resources>
     <string name="hello">Hello World, VisualDetection!</string>
     <string name="app_name">Ocula</string>
+    <string name="camera_capture">Snap</string>
 </resources>

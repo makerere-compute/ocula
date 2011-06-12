@@ -11,13 +11,22 @@
 
 
     <application android:icon="@drawable/icon" android:label="@string/app_name">
-        <activity android:name=".VisualDetection"
-                  android:label="@string/app_name">
+        <activity android:label="@string/app_name" android:name="VisualDetection">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="VisualDetection"></action>
             </intent-filter>
         </activity>
+        <activity android:name="SnapDetect">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER"></category>
+            </intent-filter>
+        </activity>
+        <activity android:name="ParasiteDetected"><intent-filter>
+                <action android:name="ParasiteDetected"></action>
+                <category android:name="android.intent.category.DEFAULT"></category>
+            </intent-filter></activity>
 
     </application>
 </manifest>
