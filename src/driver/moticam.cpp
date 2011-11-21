@@ -7,18 +7,23 @@
  *      position: Research Programmer at AI-DEV Makerere University
  */
 
+#include "moticam.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <signal.h>
 #include <ctype.h>
+#include <iostream>
+#include <fstream>
 #include <usb.h>
 #if 0
 #include <linux/usbdevice_fs.h>
 #define LIBUSB_AUGMENT
 #include "libusb_augment.h"
 #endif
+
+using namespace std;
 
 struct usb_dev_handle *devh;
 
@@ -72,16 +77,84 @@ void print_bytes(char *bytes, int len) {
 	int i;
 	if (len > 0) {
 		for (i = 0; i < len; i++) {
-			printf("%02x ", (int) ((unsigned char) bytes[i]));
+			printf("%02x", bytes[i]);
 		}
-		printf("\"");
-		for (i = 0; i < len; i++) {
-			printf("%c", isprint(bytes[i]) ? bytes[i] : '.');
-		}
-		printf("\"");
+		/*printf("\"");
+		 for (i = 0; i < len; i++) {
+		 //printf("%c", isprint(bytes[i]) ? bytes[i] : '.');
+		 }
+		 printf("\"");*/
 	}
 }
+void create_image(char *bytes, int len) {
+	/*
+	 unsigned char image[] = {0xb1,0xb1,0xb1,0xb1,0xb1,0xb1,0xb1,0xb1,0xb1,0xb1};
+	 std::fstream myFile;
 
+	 myFile.open ("image.png", std::ios::out | std::ios::binary);
+
+	 if(myFile.is_open())
+
+	 myFile.write((char*)image, sizeof(image));
+	 */
+
+	//create bmp image
+	HEADER.size_of_file = sizeof(HEADER) + sizeof(BGR) + sizeof(padding)
+			* h_in_pix + 2;
+	HEADER.reserve = 0000;
+	HEADER.offset_of_pixle_data = 54;
+	HEADER.size_of_header = 40;
+	HEADER.width = w_in_pix;
+	HEADER.hight = h_in_pix;
+	HEADER.num_of_colour_plane = 1;
+	HEADER.num_of_bit_per_pix = 24;
+	HEADER.compression = 0;
+	HEADER.size_of_pix_data = sizeof(BGR) + sizeof(padding) * h_in_pix;
+	HEADER.h_resolution = 2835;
+	HEADER.v_resolution = 2835;
+	HEADER.num_of_colour_in_palette = 0;
+	HEADER.important_colours = 0;
+
+	// write BMP Header ////////////////////////////////////////////////////////////////
+	ofstream file;
+	file.open("test.bmp", ios::out | ios::trunc | ios::binary);
+	file.write((char*) (&BM), 2);
+	file.write((char*) (&HEADER), sizeof(HEADER));
+	////////////////////////////////////////////////////////////////////////////////////
+	// write BMP data //////////////////////////////////////////////////////////////////
+	//file.write ((char*)(&BGR[0]),1);
+
+
+	// int position = w_in_pix * h_in_pix * 3;
+
+	// while (position != 0)
+	// {
+	//for (int n = 0; n != w_in_pix * 3; n++)
+	//{
+	/**
+	 * example
+	 *//**
+	 for (int n = 0; n != w_in_pix*h_in_pix; n++)
+	 {
+	 //file.write ((char*)(&BGR[position - w_in_pix * 3 + n]), 1);
+	 file.write ((char*)(&BGR[0]), 1);
+	 file.write ((char*)(&BGR[1]), 1);
+	 file.write ((char*)(&BGR[2]), 1);
+	 }*/
+	//file.write ((char*)(&padding), 2);
+	//position = position - w_in_pix * 3;
+	//   }
+
+	for (int n = 0; n != 40000 ; n++) {
+
+
+			file.write((char*) (&bytes[n]), 1);
+
+
+
+	}
+
+}
 int main(int argc, char **argv) {
 	int ret, vendor, product;
 	struct usb_device *dev;
@@ -97,14 +170,13 @@ int main(int argc, char **argv) {
 	usb_find_busses();
 	usb_find_devices();
 
-
-//moticam vendor ID
+	//moticam vendor ID
 	vendor = strtol("0x0634", &endptr, 16);
 	if (*endptr != '\0') {
 		printf("invalid vendor id\n");
 		exit(1);
 	}
-//moticam product ID
+	//moticam product ID
 	product = strtol("0x3111", &endptr, 16);
 	if (*endptr != '\0') {
 		printf("invalid product id\n");
@@ -118,7 +190,7 @@ int main(int argc, char **argv) {
 	assert(devh);
 
 	signal(SIGTERM, release_usb_device);
-   //the routines below check if we have a kernel driver.Claim the the interface for communication
+	//the routines below check if we have a kernel driver.Claim the the interface for communication
 	ret = usb_get_driver_np(devh, 0, buf, sizeof(buf));
 	printf("usb_get_driver_np returned %d\n", ret);
 	if (ret == 0) {
@@ -133,10 +205,10 @@ int main(int argc, char **argv) {
 		printf("claim failed with error %d\n", ret);
 		exit(1);
 	}
-//set alternate settings
+	//set alternate settings
 	ret = usb_set_altinterface(devh, 0);
 	assert(ret >= 0);
-//get descriptors
+	//get descriptors
 	ret = usb_get_descriptor(devh, 0x0000001, 0x0000000, buf, 0x0000012);
 	printf("1 get descriptor returned %d, bytes: ", ret);
 	print_bytes(buf, ret);
@@ -173,129 +245,175 @@ int main(int argc, char **argv) {
 	 * Most of the functions below are vendor specific messages to Moticam
 	 *
 	 */
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_OUT , 0xf1,0x0000005,0x00000ba, buf, 0x0000002, 1000);
-	 print_bytes(buf, ret);
-	 printf("7 set control request returned %d\n", ret);
-	 usleep(1*1000);
-
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_OUT , 0xf1, 0x0000062,0x00000ba, buf, 0x0000002, 1000);
-	 print_bytes(buf, ret);
-	 printf("8 set control request returned %d\n", ret);
-	 usleep(62*1000);
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_OUT , 0xf1, 0x0000020,  0x00000ba, buf, 0x0000002, 1000);
-	 print_bytes(buf, ret);
-     printf("9 set control request returned %d\n", ret);
-	 usleep(1*1000);
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_IN , 0xf0,  0x0000020, 0x00000ba, buf, 0x0000002, 1000);
-	 print_bytes(buf, ret);
-	 printf("10 set control request returned %d\n", ret);
-	 usleep(3*1000);
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_IN , 0xf0, 0x000002d, 0x00000ba,  buf, 0x0000002, 1000);
-	 print_bytes(buf, ret);
-	 printf("11 set control request returned %d\n", ret);
-	 usleep(1*1000);
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_IN , 0xf0, 0x000002b,  0x00000ba, buf, 0x0000002, 1000);
-	 print_bytes(buf, ret);
-	 printf("12 set control request returned %d\n", ret);
-	 usleep(1*1000);
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_IN , 0xf0,  0x000002e, 0x00000ba, buf, 0x0000002, 1000);
-	 print_bytes(buf, ret);
-	 printf("13 set control request returned %d\n", ret);
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_IN , 0xf0, 0x000002c, 0x00000ba,  buf, 0x0000002, 1000);
-	 print_bytes(buf, ret);
-	 printf("14 set control request returned %d\n", ret);
-	 usleep(1*1000);
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_IN , 0xf0,0x0000001,  0x00000ba,  buf, 0x0000008, 1000);
-	 print_bytes(buf, ret);
-	 printf("15 set control request returned %d\n", ret);
-	 usleep(2*1000);
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_IN , 0xf0,0x0000022,  0x00000ba,  buf, 0x0000004, 1000);
-     print_bytes(buf, ret);
-	 printf("16 set control request returned %d\n", ret);
-	 usleep(89*1000);
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_IN , 0xf0,0x0000001,  0x00000ba,  buf, 0x0000008, 1000);
-	 print_bytes(buf, ret);
-	 printf("17 set control request returned %d\n", ret);
-	 usleep(2*1000);
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_IN , 0xf0,0x0000022,  0x00000ba,  buf, 0x0000004, 1000);
-	 print_bytes(buf, ret);
-	 printf("18 set control request returned %d\n", ret);
-	 usleep(2*1000);
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_IN , 0xf0,0x0000009,  0x00000ba,  buf, 0x0000002, 1000);
-	 print_bytes(buf, ret);
-	 printf("19 set control request returned %d\n", ret);
-	 usleep(1*1000);
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_IN , 0xf0,0x000002d,  0x00000ba,  buf, 0x0000002, 1000);
-	 print_bytes(buf, ret);
-	 printf("20 set control request returned %d\n", ret);
-	 usleep(1*1000);
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_IN , 0xf0,0x000002b,  0x00000ba,  buf, 0x0000002, 1000);
-	 print_bytes(buf, ret);
-	 printf("21 set control request returned %d\n", ret);
-	 usleep(1*1000);
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_IN , 0xf0,0x000002e,  0x00000ba,  buf, 0x0000002, 1000);
-	 print_bytes(buf, ret);
-	 printf("22 set control request returned %d\n", ret);
-	 usleep(1*1000);
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_IN , 0xf0,0x000002c,  0x00000ba,  buf, 0x0000002, 1000);
-	 print_bytes(buf, ret);
-	 printf("23 set control request returned %d\n", ret);
-	 usleep(1*1000);
-
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_IN , 0xf1,0x0000020,  0x00000ba,  buf, 0x0000002, 1000);
-	 print_bytes(buf, ret);
-	 printf("24 set control request returned %d\n", ret);
-	 usleep(1*1000);
-
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_IN , 0xf0,0x0000020,  0x00000ba,  buf, 0x0000002, 1000);
-	 print_bytes(buf, ret);
-	 printf("25 set control request returned %d\n", ret);
-	 usleep(1*1000);
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_IN , 0xf1,0x0000020,  0x00000ba,  buf, 0x0000002, 1000);
-	 print_bytes(buf, ret);
-	 printf("26 set control request returned %d\n", ret);
-	 usleep(1*1000);
-
-	 ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR | USB_ENDPOINT_IN , 0xf0,0x0000020,  0x00000ba,  buf, 0x0000002, 1000);
-	 print_bytes(buf, ret);
-	 printf("27 set control request returned %d\n", ret);
-	 usleep(890*1000);
-
-    /***
-     * Read image bytes from the device
-     */
-	ret = usb_bulk_read(devh, 0x00000082, buf, 1024, 1000);
-	printf("28 bulk read returned %d, bytes: ", ret);
+	ret
+			= usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+					| USB_ENDPOINT_IN, 0xf1, 0x0000005, 0x00000ba, buf,
+					0x0000002, 1000);
 	print_bytes(buf, ret);
-	printf("\n");
+	printf("7 set control request returned %d\n", ret);
 	usleep(1 * 1000);
 
-	ret = usb_bulk_read(devh, 0x00000082, buf, 1024, 32457);
-	printf("29 bulk read returned %d, bytes: ", ret);
+	ret
+			= usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+					| USB_ENDPOINT_IN, 0xf1, 0x0000062, 0x00000ba, buf,
+					0x0000002, 1000);
 	print_bytes(buf, ret);
+	printf("8 set control request returned %d\n", ret);
+	usleep(62 * 1000);
+
+	ret
+			= usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+					| USB_ENDPOINT_IN, 0xf1, 0x0000020, 0x00000ba, buf,
+					0x0000002, 1000);
+	print_bytes(buf, ret);
+	printf("9 set control request returned %d\n", ret);
+	usleep(1 * 1000);
+
+	ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+			| USB_ENDPOINT_OUT, 0xf0, 0x0000020, 0x00000ba, buf, 0x0000002,
+			1000);
+	print_bytes(buf, ret);
+	printf("10 set control request returned %d\n", ret);
+	usleep(3 * 1000);
+
+	ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+			| USB_ENDPOINT_OUT, 0xf0, 0x000002d, 0x00000ba, buf, 0x0000002,
+			1000);
+	print_bytes(buf, ret);
+	printf("11 set control request returned %d\n", ret);
+	usleep(1 * 1000);
+
+	ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+			| USB_ENDPOINT_OUT, 0xf0, 0x000002b, 0x00000ba, buf, 0x0000002,
+			1000);
+	print_bytes(buf, ret);
+	printf("12 set control request returned %d\n", ret);
+	usleep(1 * 1000);
+
+	ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+			| USB_ENDPOINT_OUT, 0xf0, 0x000002e, 0x00000ba, buf, 0x0000002,
+			1000);
+	print_bytes(buf, ret);
+	printf("13 set control request returned %d\n", ret);
+
+	ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+			| USB_ENDPOINT_OUT, 0xf0, 0x000002c, 0x00000ba, buf, 0x0000002,
+			1000);
+	print_bytes(buf, ret);
+	printf("14 set control request returned %d\n", ret);
+	usleep(1 * 1000);
+
+	ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+			| USB_ENDPOINT_OUT, 0xf0, 0x0000001, 0x00000ba, buf, 0x0000008,
+			1000);
+	print_bytes(buf, ret);
+	printf("15 set control request returned %d\n", ret);
+	usleep(2 * 1000);
+
+	ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+			| USB_ENDPOINT_OUT, 0xf0, 0x0000022, 0x00000ba, buf, 0x0000004,
+			1000);
+	print_bytes(buf, ret);
+	printf("16 set control request returned %d\n", ret);
+	usleep(89 * 1000);
+
+	ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+			| USB_ENDPOINT_OUT, 0xf0, 0x0000001, 0x00000ba, buf, 0x0000008,
+			1000);
+	print_bytes(buf, ret);
+	printf("17 set control request returned %d\n", ret);
+	usleep(2 * 1000);
+
+	ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+			| USB_ENDPOINT_OUT, 0xf0, 0x0000022, 0x00000ba, buf, 0x0000004,
+			1000);
+	print_bytes(buf, ret);
+	printf("18 set control request returned %d\n", ret);
+	usleep(2 * 1000);
+
+	ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+			| USB_ENDPOINT_OUT, 0xf0, 0x0000009, 0x00000ba, buf, 0x0000002,
+			1000);
+	print_bytes(buf, ret);
+	printf("19 set control request returned %d\n", ret);
+	usleep(1 * 1000);
+
+	ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+			| USB_ENDPOINT_OUT, 0xf0, 0x000002d, 0x00000ba, buf, 0x0000002,
+			1000);
+	print_bytes(buf, ret);
+	printf("20 set control request returned %d\n", ret);
+	usleep(1 * 1000);
+
+	ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+			| USB_ENDPOINT_OUT, 0xf0, 0x000002b, 0x00000ba, buf, 0x0000002,
+			1000);
+	print_bytes(buf, ret);
+	printf("21 set control request returned %d\n", ret);
+	usleep(1 * 1000);
+
+	ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+			| USB_ENDPOINT_OUT, 0xf0, 0x000002e, 0x00000ba, buf, 0x0000002,
+			1000);
+	print_bytes(buf, ret);
+	printf("22 set control request returned %d\n", ret);
+	usleep(1 * 1000);
+
+	ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+			| USB_ENDPOINT_OUT, 0xf0, 0x000002c, 0x00000ba, buf, 0x0000002,
+			1000);
+	print_bytes(buf, ret);
+	printf("23 set control request returned %d\n", ret);
+	usleep(1 * 1000);
+
+	ret
+			= usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+					| USB_ENDPOINT_IN, 0xf1, 0x0000020, 0x00000ba, buf,
+					0x0000002, 1000);
+	print_bytes(buf, ret);
+	printf("24 set control request returned %d\n", ret);
+	usleep(1 * 1000);
+
+	ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+			| USB_ENDPOINT_OUT, 0xf0, 0x0000020, 0x00000ba, buf, 0x0000002,
+			1000);
+	print_bytes(buf, ret);
+	printf("25 set control request returned %d\n", ret);
+	usleep(1 * 1000);
+
+	ret
+			= usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+					| USB_ENDPOINT_IN, 0xf1, 0x0000020, 0x00000ba, buf,
+					0x0000002, 1000);
+	print_bytes(buf, ret);
+	printf("26 set control request returned %d\n", ret);
+	usleep(1 * 1000);
+
+	ret = usb_control_msg(devh, USB_RECIP_DEVICE | USB_TYPE_VENDOR
+			| USB_ENDPOINT_OUT, 0xf0, 0x0000020, 0x00000ba, buf, 0x0000002,
+			1000);
+	print_bytes(buf, ret);
+	printf("27 set control request returned %d\n", ret);
+	usleep(890 * 1000);
+
+	/***
+	 * Read image bytes from the device
+	 */
+	ret = usb_bulk_read(devh, 0x00000082, buf, 40000, 1000);
+	printf("28 bulk read returned %d, bytes: ", ret);
+	print_bytes(buf, ret);
+	create_image(buf, ret);
 	printf("\n");
-	ret = usb_bulk_read(devh, 0x00000082, buf, 1024, 32457);
-	printf("30 bulk read returned %d, bytes: ", ret);
-	print_bytes(buf, ret);
+	/*usleep(1 * 1000);
+
+	 ret = usb_bulk_read(devh, 0x00000082, buf, 1024, 32457);
+	 printf("29 bulk read returned %d, bytes: ", ret);
+	 print_bytes(buf, ret);
+	 printf("\n");
+	 ret = usb_bulk_read(devh, 0x00000082, buf, 1024, 32457);
+	 printf("30 bulk read returned %d, bytes: ", ret);
+	 print_bytes(buf, ret);*/
+
 	printf("\n");
 	ret = usb_release_interface(devh, 0);
 	assert(ret == 0);
