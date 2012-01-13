@@ -1,21 +1,14 @@
 /*
  * moticam.c
  *
- *  Created on: Nov 13, 2011
+ *      Created on: Nov 13, 2011
  *      Author: mistaguy
  *      email:abiccel@yahoo.com
  *      position: Research Programmer at AI-DEV Makerere University
  */
 
 #include "moticam.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <signal.h>
-#include <ctype.h>
-#include <iostream>
-#include <fstream>
+
 #include <usb.h>
 #if 0
 #include <linux/usbdevice_fs.h>
@@ -70,6 +63,13 @@ struct usb_device *find_device(int vendor, int product) {
 	}
 	return NULL;
 }
+char * getHex(char *bytesIn, char *bytesOut, int len) {
+	for (int i = 0; i < len; i++) {
+		bytesOut[i] = 0x00080000 + bytesIn[i];
+		//printf("%x", bytesOut[i]);
+	}
+	return bytesOut;
+}
 /***
  * print the message from the usb communication by converting from Hex to bytes
  */
@@ -77,7 +77,7 @@ void print_bytes(char *bytes, int len) {
 	int i;
 	if (len > 0) {
 		for (i = 0; i < len; i++) {
-			printf("%02x", bytes[i]);
+			printf("%x\t", bytes[i]);
 		}
 		/*printf("\"");
 		 for (i = 0; i < len; i++) {
@@ -86,79 +86,206 @@ void print_bytes(char *bytes, int len) {
 		 printf("\"");*/
 	}
 }
+char* toHexadecimal(unsigned int num) {
+	int dividend, remain;
+	char* result = (char*) malloc(8);
+	result[0] = '0';
+	result[1] = '0';
+	result[2] = '0';
+	result[3] = '0';
+	result[4] = '0';
+	result[5] = '0';
+	result[6] = '0';
+	result[7] = '0';
+
+	char hexArray[16];
+	hexArray[0] = '0';
+	hexArray[1] = '1';
+	hexArray[2] = '2';
+	hexArray[3] = '3';
+	hexArray[4] = '4';
+	hexArray[5] = '5';
+	hexArray[6] = '6';
+	hexArray[7] = '7';
+	hexArray[8] = '8';
+	hexArray[9] = '9';
+	hexArray[10] = 'A';
+	hexArray[11] = 'B';
+	hexArray[12] = 'C';
+	hexArray[13] = 'D';
+	hexArray[14] = 'E';
+	hexArray[15] = 'F';
+	int counter = 7;
+	dividend = (int) (num / 16);
+	remain = num % 16;
+	result[counter--] = hexArray[remain];
+
+	while (dividend != 0) {
+		remain = dividend % 16;
+
+		dividend = (int) dividend / 16;
+
+		result[counter--] = hexArray[remain];
+
+	}
+	/*printf("%d,", result[0]);
+	 printf("%d,", result[1]);
+	 printf("%d,", result[2]);
+	 printf("%d,", result[3]);
+	 printf("%d,", result[4]);
+	 printf("%d,", result[5]);
+	 printf("%d,", result[6]);
+	 printf("%d\t", result[7]);*/
+
+	return result;
+}
+
+int* toHexadecimalBase10(unsigned int num) {
+	int dividend, remain;
+	char* result = (char*) malloc(1);
+	result[0] = '0';
+	result[1] = '0';
+	result[2] = '0';
+	result[3] = '0';
+	result[4] = '0';
+	result[5] = '0';
+	result[6] = '0';
+	result[7] = '0';
+
+	int* resultInt = (int *) malloc(4 * sizeof(int));
+	result[0] = 0;
+	result[1] = 0;
+	result[2] = 0;
+	result[3] = 0;
+
+	char hexArray[16];
+	hexArray[0] = '0';
+	hexArray[1] = '1';
+	hexArray[2] = '2';
+	hexArray[3] = '3';
+	hexArray[4] = '4';
+	hexArray[5] = '5';
+	hexArray[6] = '6';
+	hexArray[7] = '7';
+	hexArray[8] = '8';
+	hexArray[9] = '9';
+	hexArray[10] = 'A';
+	hexArray[11] = 'B';
+	hexArray[12] = 'C';
+	hexArray[13] = 'D';
+	hexArray[14] = 'E';
+	hexArray[15] = 'F';
+	int counter = 7;
+	dividend = (int) (num / 16);
+	remain = num % 16;
+	result[counter--] = hexArray[remain];
+
+	while (dividend != 0) {
+		remain = dividend % 16;
+
+		dividend = (int) dividend / 16;
+
+		result[counter--] = hexArray[remain];
+
+	}
+	char holder[3] = { result[0], result[1], '\0' };
+	int value = strtol(holder, NULL, 16);
+	resultInt[0] = value;
+
+	char holder1[3] = { result[2], result[3], '\0' };
+	int value1 = strtol(holder1, NULL, 16);
+	resultInt[1] = value1;
+
+	char holder2[3] = { result[4], result[5], '\0' };
+	int value2 = strtol(holder2, NULL, 16);
+	resultInt[2] = value2;
+
+	char holder3[3] = { result[6], result[7], '\0' };
+	int value3 = strtol(holder3, NULL, 16);
+	resultInt[3] = value3;
+	/*	printf("%d,", value);
+	 printf("%d,", value1);
+	 printf("%d,", value2);
+	 printf("%d\t", value3);*/
+
+	return resultInt;
+}
 void create_image(char *bytes, int len) {
-	/*
-	 unsigned char image[] = {0xb1,0xb1,0xb1,0xb1,0xb1,0xb1,0xb1,0xb1,0xb1,0xb1};
-	 std::fstream myFile;
+	if (len > 0) {
 
-	 myFile.open ("image.png", std::ios::out | std::ios::binary);
+		FILE *fp = fopen("img.ppm", "wb"); // b - binary mode
+		(void) fprintf(fp, "P6\n%d %d\n255\n", w_in_pix, h_in_pix);
+		int counter = 0;
 
-	 if(myFile.is_open())
-
-	 myFile.write((char*)image, sizeof(image));
-	 */
-
-	//create bmp image
-	HEADER.size_of_file = sizeof(HEADER) + sizeof(BGR) + sizeof(padding)
-			* h_in_pix + 2;
-	HEADER.reserve = 0000;
-	HEADER.offset_of_pixle_data = 54;
-	HEADER.size_of_header = 40;
-	HEADER.width = w_in_pix;
-	HEADER.hight = h_in_pix;
-	HEADER.num_of_colour_plane = 1;
-	HEADER.num_of_bit_per_pix = 24;
-	HEADER.compression = 0;
-	HEADER.size_of_pix_data = sizeof(BGR) + sizeof(padding) * h_in_pix;
-	HEADER.h_resolution = 2835;
-	HEADER.v_resolution = 2835;
-	HEADER.num_of_colour_in_palette = 0;
-	HEADER.important_colours = 0;
-
-	// write BMP Header ////////////////////////////////////////////////////////////////
-	ofstream file;
-	file.open("test.bmp", ios::out | ios::trunc | ios::binary);
-	file.write((char*) (&BM), 2);
-	file.write((char*) (&HEADER), sizeof(HEADER));
-	////////////////////////////////////////////////////////////////////////////////////
-	// write BMP data //////////////////////////////////////////////////////////////////
-	//file.write ((char*)(&BGR[0]),1);
+		static unsigned char color[3], a[81920], r[81920], g[81920], b[81920];
 
 
-	// int position = w_in_pix * h_in_pix * 3;
-
-	// while (position != 0)
-	// {
-	//for (int n = 0; n != w_in_pix * 3; n++)
-	//{
-	/**
-	 * example
-	 *//**
-	 for (int n = 0; n != w_in_pix*h_in_pix; n++)
-	 {
-	 //file.write ((char*)(&BGR[position - w_in_pix * 3 + n]), 1);
-	 file.write ((char*)(&BGR[0]), 1);
-	 file.write ((char*)(&BGR[1]), 1);
-	 file.write ((char*)(&BGR[2]), 1);
-	 }*/
-	//file.write ((char*)(&padding), 2);
-	//position = position - w_in_pix * 3;
-	//   }
-
-	for (int n = 0; n != 40000 ; n++) {
+		for(int w=0;w<256;w++)
+		{
 
 
-			file.write((char*) (&bytes[n]), 1);
+               //  b/a block
+			for (int i = 0; i < 640; i++) {
+				if (i % 2 == 0 || i == 0) {
+					b[i] = bytes[counter];
+
+				} else
+
+				{
+					a[i] = bytes[counter];
+
+				}
+
+				counter = counter + 1;
+			}
+            //  g/r block
+			for (int i = 0; i < 640; i++) {
+				if (i % 2 == 0 || i == 0) {
+					g[i] = bytes[counter];
+
+				} else
+
+				{
+					r[i] = bytes[counter];
+
+				}
+
+				counter = counter + 1;
+			}
+
+		}
 
 
+//compose image
+		for(int width=0;width<w_in_pix;width++)
+		{
+
+
+		 for(int height=0;height<h_in_pix;height++)
+		 {
+			 color[0] = r[width*height]; //red
+			 printf("%x",color[0]);
+			 color[1] = g[width*height]; //green
+			 color[2] = b[width*height]; //bluee
+			 fwrite(color, 1, 3, fp);
+
+		 }
+
+
+		}
+
+
+
+		(void) fclose(fp);
 
 	}
 
 }
+
 int main(int argc, char **argv) {
 	int ret, vendor, product;
 	struct usb_device *dev;
-	char buf[65535], *endptr;
+	char buf[65535], *endptr, imageBuf[0x0050000];
 #if 0
 	usb_urb *isourb;
 	struct timeval isotv;
@@ -399,11 +526,17 @@ int main(int argc, char **argv) {
 	/***
 	 * Read image bytes from the device
 	 */
-	ret = usb_bulk_read(devh, 0x00000082, buf, 40000, 1000);
+	ret = usb_bulk_read(devh, 0x00000082, imageBuf, 0x0050000, 5457);
 	printf("28 bulk read returned %d, bytes: ", ret);
-	print_bytes(buf, ret);
-	create_image(buf, ret);
-	printf("\n");
+	usleep(100 * 1000);
+	create_image(imageBuf, ret);
+
+	//	ret = usb_bulk_read(devh, 0x00000082, imageBuf, 0x0050000, 5457);
+	//		printf("28 bulk read returned %d, bytes: ", ret);
+	//		print_bytes(imageBuf, ret);
+	//	printf("\n");
+
+
 	/*usleep(1 * 1000);
 
 	 ret = usb_bulk_read(devh, 0x00000082, buf, 1024, 32457);
