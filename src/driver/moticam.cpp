@@ -77,7 +77,7 @@ void print_bytes(char *bytes, int len) {
 	int i;
 	if (len > 0) {
 		for (i = 0; i < len; i++) {
-			printf("%x\t", bytes[i]);
+			printf("%u,", bytes[i]);
 		}
 		/*printf("\"");
 		 for (i = 0; i < len; i++) {
@@ -216,23 +216,22 @@ void create_image(char *bytes, int len) {
 		FILE *fp = fopen("img.ppm", "wb"); // b - binary mode
 		(void) fprintf(fp, "P6\n%d %d\n255\n", w_in_pix, h_in_pix);
 		int counter = 0;
-
 		static unsigned char color[3], a[81920], r[81920], g[81920], b[81920];
 
 
 		for(int w=0;w<256;w++)
 		{
-
-
                //  b/a block
 			for (int i = 0; i < 640; i++) {
 				if (i % 2 == 0 || i == 0) {
-					b[i] = bytes[counter];
+					int v= bytes[counter];
+					b[i] =v;
 
 				} else
 
 				{
-					a[i] = bytes[counter];
+					int v= bytes[counter];
+					a[i] = v;
 
 				}
 
@@ -241,12 +240,14 @@ void create_image(char *bytes, int len) {
             //  g/r block
 			for (int i = 0; i < 640; i++) {
 				if (i % 2 == 0 || i == 0) {
-					g[i] = bytes[counter];
+					int v= bytes[counter];
+					g[i] = v;
 
 				} else
 
 				{
-					r[i] = bytes[counter];
+					int v= bytes[counter];
+					r[i] = v;
 
 				}
 
@@ -257,16 +258,36 @@ void create_image(char *bytes, int len) {
 
 
 //compose image
-		for(int width=0;width<w_in_pix;width++)
+		counter=0;
+		for(int width=0;width<320;width++)
 		{
 
 
-		 for(int height=0;height<h_in_pix;height++)
+		 for(int height=0;height<256;height++)
 		 {
-			 color[0] = r[width*height]; //red
-			 printf("%x",color[0]);
-			 color[1] = g[width*height]; //green
-			 color[2] = b[width*height]; //bluee
+
+			 int blue=bytes[counter++];
+
+			printf("b:%u",blue);
+			int green=bytes[counter++];
+			 printf("g:%u",green);
+            int red=bytes[counter++];
+			 printf("r:%u",red);
+           int alpha=bytes[counter++];
+			 printf("a:%u\t,",alpha);
+			 color[0]=red;
+			 color[1]=green;
+			 color[2]=blue;
+
+
+			// int v=bytes[counter++];
+			// color[0]=abs(v);
+			 //v=bytes[counter++];
+			// color[1]=abs(v);
+			// v=bytes[counter++];
+			 //color[2]=abs(v);
+			// v=bytes[counter++];
+			// 			 color[3]=abs(v);
 			 fwrite(color, 1, 3, fp);
 
 		 }
@@ -529,6 +550,9 @@ int main(int argc, char **argv) {
 	ret = usb_bulk_read(devh, 0x00000082, imageBuf, 0x0050000, 5457);
 	printf("28 bulk read returned %d, bytes: ", ret);
 	usleep(100 * 1000);
+	//print_bytes(imageBuf, ret);
+
+
 	create_image(imageBuf, ret);
 
 	//	ret = usb_bulk_read(devh, 0x00000082, imageBuf, 0x0050000, 5457);
