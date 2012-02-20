@@ -2,34 +2,17 @@
 Use dense SURF features to identify matches in a given image
 '''
 
-import cv
+import cv2
 import numpy
 import scipy.stats
 import pickle
 
-def normpdf(x,params):
-    dev = x-params['mu']
-    exppart = numpy.exp(-0.5*numpy.dot(numpy.dot(dev.transpose(),params['Sigma_inv']),dev))
-    dmvnorm = params['normconstant']*exppart
-    return dmvnorm
 
-def matchprobability(d,mixture):
-    ncomponents = len(mixture)
-    odds = numpy.zeros(ncomponents)
-    oddspositive=0
-    oddsnegative=0
-    for m in range(ncomponents):
-        odds = mixture[m]['weight'] *  normpdf(d,mixture[m])
-        if mixture[m]['class']==1:
-            oddspositive+=odds
-        else:
-            oddsnegative+=odds
-    posterior = oddspositive/(oddspositive+oddsnegative)
-    return posterior
 
-def detect(imagefilename):
+def detect(imagefilename,featuretype='surf',threshold=0.0,returnpatchscores=False):
     paramsdir = '../../data/params/'
     mergepairs = True
+    '''
     allclasses = numpy.loadtxt('%s/classes.txt' % (paramsdir))
     allweights = numpy.loadtxt('%s/weights.txt' % (paramsdir))
     allmeans = numpy.loadtxt('%s/means.txt' % (paramsdir))
@@ -58,12 +41,16 @@ def detect(imagefilename):
         p['Sigma_inv'] = numpy.linalg.inv(p['Sigma'])
         p['normconstant'] = numpy.exp(-0.5*xdim*numpy.log(2*numpy.pi))*numpy.power(numpy.linalg.det(p['Sigma']),-0.5)
         mixture.append(p)
-
+    '''
+    classifier = cv2.Boost()
+    #classifier = cv2.SVM()
+    classifier.load('%sboost-%s-classifier.cv2' % (paramsdir,featuretype))
     # load descriptors from feature file
     patchstep = 25
     patchsize = 30
-    featuretype = 'surf_%d_%d' % (patchstep,patchsize)
-    descriptorfile = imagefilename[:-3] + featuretype
+    #featuretype = 'surf_%d_%d' % (patchstep,patchsize)
+    featurestring = '%s_%d_%d' % (featuretype,patchstep,patchsize)
+    descriptorfile = imagefilename[:-3] + featurestring
     data = numpy.genfromtxt(descriptorfile)
 
     # for each descriptor, determine whether there is a match or not
@@ -71,11 +58,12 @@ def detect(imagefilename):
     for i in range(data.shape[0]):
         xkey = data[i,0]
         ykey = data[i,1]
-        descriptor = data[i,3:]
-        p = matchprobability(descriptor,mixture)
-        p = 1/0
-        if p>0.0:
-            if (not mergepairs) or ((xkey-patchstep,ykey) not in matches) and ((xkey,ykey-patchstep) not in matches):
+        descriptor = numpy.array(data[i,3:],dtype=numpy.float32)
+        p = classifier.predict(descriptor, returnSum=True)
+        #p = classifier.predict(descriptor, returnDFVal=True)
+        if returnpatchscores:
+            matches.append(p)
+        elif p>threshold:
+            if (not mergepairs) or (((xkey-patchstep,ykey) not in matches) and ((xkey,ykey-patchstep) not in matches)):
                 matches.append((xkey,ykey))
-
     return matches

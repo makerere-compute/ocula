@@ -30,12 +30,12 @@ def matchprobability(d,mixture):
 def detect(imagefilename):
     paramsdir = '../../data/params/'
     mergepairs = True
-    allclasses = numpy.loadtxt('%s/classes.txt' % (paramsdir))
-    allweights = numpy.loadtxt('%s/weights.txt' % (paramsdir))
-    allmeans = numpy.loadtxt('%s/means.txt' % (paramsdir))
-    allcovs = numpy.loadtxt('%s/covs.txt' % (paramsdir))
+    allclasses = numpy.loadtxt('%s/moments_classes.txt' % (paramsdir))
+    allweights = numpy.loadtxt('%s/moments_weights.txt' % (paramsdir))
+    allmeans = numpy.loadtxt('%s/moments_means.txt' % (paramsdir))
+    allcovs = numpy.loadtxt('%s/moments_covs.txt' % (paramsdir))
 
-    picklefile = open('../training/surfparams.pkl', 'rb')
+    picklefile = open('%s/momentparams.pkl' % (paramsdir), 'rb')
     pickle.load(picklefile) # mu_pos
     pickle.load(picklefile) # mu_neg
     pickle.load(picklefile) # Sigma_pos
@@ -62,7 +62,7 @@ def detect(imagefilename):
     # load descriptors from feature file
     patchstep = 25
     patchsize = 30
-    featuretype = 'surf_%d_%d' % (patchstep,patchsize)
+    featuretype = 'moments_%d_%d' % (patchstep,patchsize)
     descriptorfile = imagefilename[:-3] + featuretype
     data = numpy.genfromtxt(descriptorfile)
 
@@ -72,10 +72,9 @@ def detect(imagefilename):
         xkey = data[i,0]
         ykey = data[i,1]
         descriptor = data[i,3:]
-        p = matchprobability(descriptor,mixture)
-        p = 1/0
-        if p>0.0:
-            if (not mergepairs) or ((xkey-patchstep,ykey) not in matches) and ((xkey,ykey-patchstep) not in matches):
-                matches.append((xkey,ykey))
-
+        if descriptor[0]>0:
+            p = matchprobability(descriptor,mixture)
+            if p>0.5:
+                if (not mergepairs) or ((xkey-patchstep,ykey) not in matches) and ((xkey,ykey-patchstep) not in matches):
+                    matches.append((xkey,ykey))
     return matches
