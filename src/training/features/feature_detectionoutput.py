@@ -1,6 +1,7 @@
 #!/usr/bin/python
 '''
-Calculate dense cascade features across an image
+Calculate the output of detection methods and record them as a high
+level feature.
 
 Usage: 
 feature_cascade.py filename xstep ystep size detectortype
@@ -14,7 +15,7 @@ where class is 1 or 0 indicating object presence.
 '''
 
 import sys
-sys.path.append('../detection')
+sys.path.append('../../detection')
 
 import glob
 from lxml import etree
@@ -35,10 +36,8 @@ if __name__=='__main__':
 
     if detectortype=='cascade':
         matchingcoords = cascadedetect.detect(imagefilename)
-    elif detectortype=='boost-surf':
-        patchscores = boosteddetect.detect(imagefilename,featuretype='surf',returnpatchscores=True)
-    elif detectortype=='boost-moments':
-        patchscores = boosteddetect.detect(imagefilename,featuretype='moments',returnpatchscores=True)
+    else:
+        patchscores = boosteddetect.detect(imagefilename,featuretype=detectortype,returnpatchscores=True,paramsdir='../../../data/params/')
 
     im = cv.LoadImage(imagefilename)
 

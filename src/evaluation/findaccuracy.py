@@ -149,8 +149,10 @@ if __name__=='__main__':
             # Change the following line to use a different detection routine. #
             ###################################################################
             #matchingcoords = cascadedetect.detect(testfile)
-            matchingcoords = naivebayesdetect.detect(testfile,threshold=0.92,prior=objectprior)
+            matchingcoords = naivebayesdetect.detect(testfile,threshold=0.5,prior=objectprior)
+            #matchingcoords = boosteddetect.detect(testfile,featuretype='sift',threshold=0.5)
             #matchingcoords = boosteddetect.detect(testfile,featuretype='moments',threshold=0.0)
+            #matchingcoords = boosteddetect.detect(testfile,featuretype='orb',threshold=0.5)
             #matchingcoords = boosteddetect.detect(testfile,featuretype='surf',threshold=1.0)
             #matchingcoords = cascadedetect.detect(testfile,cascadefile='../../data/cascade/cascade_HAAR2.xml',trainpatchsize=14,smallestobjectsize=45.0,scalefactor=1.1,minneighbours=2)
             boundingboxes = getboundingboxes(testfile)

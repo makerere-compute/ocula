@@ -40,9 +40,15 @@ int main(int argc, char** argv)
     sscanf(argv[3], "%d", &xstep);
     sscanf(argv[4], "%d", &ystep);
     sscanf(argv[5], "%d", &size);
-   
-    IplImage* image = cvLoadImage(filename, CV_LOAD_IMAGE_GRAYSCALE );
-    
+ 
+    IplImage* image;
+    if (strcmp(featuretype,"OpponentSURF")==0 || strcmp(featuretype,"OpponentSIFT")==0) {
+        image = cvLoadImage(filename);
+    }
+    else {
+        image = cvLoadImage(filename, CV_LOAD_IMAGE_GRAYSCALE );
+    }
+
     vector<KeyPoint> keypoints;
 
     width=image->width;
@@ -58,19 +64,10 @@ int main(int argc, char** argv)
         y += ystep;
     }
 
-    if (strcmp(featuretype,"surf")) {
-        fprintf("SURF features\n");
-        SurfDescriptorExtractor extractor;
-    }
-    if (strcmp(featuretype,"surf")) {
-        fprintf("SIFT features\n");
-        SiftDescriptorExtractor extractor = SiftDescriptorExtractor(1.0);
-    }
-    
-    //BriefDescriptorExtractor extractor;
+    Ptr<DescriptorExtractor> extractor =  DescriptorExtractor::create(featuretype);
 
 	Mat descriptors;
-	extractor.compute(image, keypoints, descriptors);
+	extractor->compute(image, keypoints, descriptors);
 
     int ndescriptors, descriptorsize;
     ndescriptors = descriptors.rows;
@@ -91,7 +88,7 @@ int main(int argc, char** argv)
 
             // if there is a missing line, fill it in
             if ((kpx>x && kpy==y) || kpy>y) {
-                printf("%d %d %d %d %d ",x,y,kpx,kpy,size);
+                printf("%d %d %d ",x,y,size);
                 for (int j=0;j<descriptorsize;j++) {
                     printf("0 ");
                 }
@@ -104,8 +101,15 @@ int main(int argc, char** argv)
                     if (x==kpx && y==kpy) {
                         printf("%d %d %d ", int(keypoints[i].pt.x),int(keypoints[i].pt.y),size);
                         for (int j=0;j<descriptorsize;j++) {
-                            //printf("%.5f ",descriptors.at<float>(i,j));
-                            printf("%.0f ",descriptors.at<float>(i,j));
+                            if (strcmp(featuretype,"SURF")==0) {
+                                printf("%.5f ",descriptors.at<float>(i,j));
+                            }
+                            else if (strcmp(featuretype,"ORB")==0) {
+                                printf("%u ",descriptors.at<uchar>(i,j));
+                            }
+                            else {
+                                printf("%.0f ",descriptors.at<float>(i,j));
+                            }
                         }
                         printf("\n");
                         foundkeypoint = 1;

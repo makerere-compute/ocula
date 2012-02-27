@@ -1,5 +1,5 @@
 '''
-Use dense SURF features to identify matches in a given image
+Load a classifer and feature set, make corresponding patch predictions
 '''
 
 import cv2
@@ -9,8 +9,7 @@ import pickle
 
 
 
-def detect(imagefilename,featuretype='surf',threshold=0.0,returnpatchscores=False):
-    paramsdir = '../../data/params/'
+def detect(imagefilename,featuretype='surf',threshold=0.0,returnpatchscores=False,paramsdir='../../data/params/'):
     mergepairs = True
     '''
     allclasses = numpy.loadtxt('%s/classes.txt' % (paramsdir))

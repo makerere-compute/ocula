@@ -55,7 +55,9 @@ if __name__=='__main__':
     patchstep = 25
     patchsize = 30
     #featurename = 'surf'
-    featurename = 'moments'
+    #featurename = 'sift'
+    featurename = 'orb'
+    #featurename = 'moments'
     featuretype = '%s_%d_%d' % (featurename,patchstep,patchsize)
     traintargetssuffix = 'traintargets_%d_%d' % (patchstep,patchsize)
 

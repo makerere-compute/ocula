@@ -40,8 +40,8 @@ if __name__=='__main__':
     # Read feature files with this suffix
     patchstep = 25
     patchsize = 30
-    featurename = ['cascade','boost-surf','boost-moments']
-    nposdescriptorstouse = 32585
+    featurename = ['boost-sift','cascade','boost-orb']
+    nposdescriptorstouse = 22000
     nnegdescriptorstouse = 200000
     negativeacceptancerate =.15 
     iposdescriptor = 0
